@@ -1,0 +1,187 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>DeepSeek Chat</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .logout-btn {
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        .logout-btn:hover {
+            background-color: #c82333;
+        }
+        #chatbox {
+            flex-grow: 1;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            height: calc(100vh - 200px);
+            overflow-y: auto;
+        }
+        .input-container {
+            display: flex;
+            gap: 10px;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        #user-input {
+            flex-grow: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        #send-btn {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        #send-btn:hover {
+            background-color: #0056b3;
+        }
+        .message {
+            margin-bottom: 15px;
+            padding: 10px;
+            border-radius: 8px;
+        }
+        .user-message {
+            background-color: #007bff;
+            color: white;
+            margin-left: 20%;
+        }
+        .bot-message {
+            background-color: #f8f9fa;
+            margin-right: 20%;
+        }
+        .message strong {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+        .typing-indicator {
+            display: none;
+            color: #666;
+            font-style: italic;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="user-info">
+            <h2>안녕하세요, {{ request.session.user }}님!</h2>
+        </div>
+        <a href="{% url 'logout' %}" class="logout-btn">로그아웃</a>
+    </div>
+    <div id="chatbox"></div>
+    <div class="typing-indicator">DeepSeek가 답변을 작성 중입니다...</div>
+    <div class="input-container">
+        <input type="text" id="user-input" placeholder="메시지를 입력하세요..." autofocus>
+        <button id="send-btn">전송</button>
+    </div>
+
+    <script>
+        const chatbox = document.getElementById("chatbox");
+        const userInput = document.getElementById("user-input");
+        const sendBtn = document.getElementById("send-btn");
+        const typingIndicator = document.querySelector(".typing-indicator");
+
+        function addMessage(message, isUser = false) {
+            const messageDiv = document.createElement("div");
+            messageDiv.className = `message ${isUser ? 'user-message' : 'bot-message'}`;
+            messageDiv.innerHTML = `<strong>${isUser ? 'You' : 'DeepSeek'}</strong>${message}`;
+            chatbox.appendChild(messageDiv);
+            chatbox.scrollTop = chatbox.scrollHeight;
+        }
+
+        async function sendMessage() {
+            const prompt = userInput.value.trim();
+            if (!prompt) return;
+
+            // 사용자 메시지 표시
+            addMessage(prompt, true);
+            userInput.value = "";
+
+            // 입력 비활성화 및 타이핑 표시기 보이기
+            userInput.disabled = true;
+            sendBtn.disabled = true;
+            typingIndicator.style.display = "block";
+
+            try {
+                const response = await fetch("/chat/api/", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-CSRFToken": "{{ csrf_token }}"
+                    },
+                    body: JSON.stringify({ prompt: prompt })
+                });
+
+                const data = await response.json();
+                if (data.error) {
+                    addMessage(`Error: ${data.error}`);
+                } else {
+                    addMessage(data.response);
+                }
+            } catch (error) {
+                addMessage(`Error: ${error.message}`);
+            } finally {
+                // 입력 활성화 및 타이핑 표시기 숨기기
+                userInput.disabled = false;
+                sendBtn.disabled = false;
+                typingIndicator.style.display = "none";
+                userInput.focus();
+            }
+        }
+
+        // Enter 키로 전송
+        userInput.addEventListener("keypress", function(e) {
+            if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+
+        sendBtn.addEventListener("click", sendMessage);
+
+        // 시작 메시지
+        addMessage("안녕하세요! 무엇을 도와드릴까요?");
+    </script>
+</body>
+</html>
+

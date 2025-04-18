@@ -1,0 +1,56 @@
+from django.shortcuts import render, redirect
+from django.contrib.auth import login, authenticate
+from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse
+import requests
+import os
+from .forms import CustomUserCreationForm  # ✅ 커스텀 폼 추가
+
+# DeepSeek API URL (환경 변수에서 가져오거나 기본값 설정)
+DEEPSEEK_API_URL = os.environ.get("DEEPSEEK_API_URL", "http://localhost:11434/api/generate")
+
+# ✅ 회원가입 뷰 (CustomUserCreationForm 사용)
+def register_view(request):
+    if request.method == "POST":
+        form = CustomUserCreationForm(request.POST)  # ✅ 커스텀 폼 사용
+        if form.is_valid():
+            user = form.save()
+            login(request, user)
+            return redirect('chat')  # 회원가입 후 채팅 페이지로 이동
+    else:
+        form = CustomUserCreationForm()
+    return render(request, "register.html", {"form": form})
+
+# ✅ 로그인 뷰
+def login_view(request):
+    if request.method == "POST":
+        username = request.POST["username"]
+        password = request.POST["password"]
+        user = authenticate(request, username=username, password=password)
+        if user is not None:
+            login(request, user)
+            return redirect("chat")  # 로그인 성공 시 채팅 페이지로 이동
+    return render(request, "login.html")
+
+# ✅ 채팅 페이지 뷰 (로그인한 사용자만 접근 가능)
+@login_required
+def chat_view(request):
+    return render(request, "chat.html")
+
+# ✅ DeepSeek 챗봇 API 엔드포인트
+@login_required
+def chat_api(request):
+    if request.method == "POST":
+        data = request.POST.get("prompt", "").strip()
+        if data:
+            payload = {
+                "model": "deepseek-r1:8b",
+                "prompt": data,
+                "stream": False
+            }
+            response = requests.post(DEEPSEEK_API_URL, json=payload)
+            if response.status_code == 200:
+                answer = response.json().get('response', '응답이 없습니다.')
+                return JsonResponse({"response": answer})
+    return JsonResponse({"error": "잘못된 요청"}, status=400)
+

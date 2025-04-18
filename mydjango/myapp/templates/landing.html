@@ -1,0 +1,240 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solseek - AI 대화 서비스</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f8f9fa;
+        }
+        .header {
+            background-color: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+        }
+        .header-top {
+            background-color: #1a237e;
+            padding: 12px 0;
+            text-align: center;
+        }
+        .header-top a {
+            color: white;
+            text-decoration: none;
+            font-size: 16px;
+            font-weight: 500;
+            margin: 0 25px;
+            transition: color 0.3s;
+            position: relative;
+        }
+        .header-top a:not(:last-child)::after {
+            content: '';
+            position: absolute;
+            right: -25px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 1px;
+            height: 14px;
+            background-color: rgba(255, 255, 255, 0.3);
+        }
+        .header-top a:hover {
+            color: #64b5f6;
+        }
+        .header-main {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 50px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .logo {
+            font-size: 22px;
+            font-weight: 700;
+            color: #1a237e;
+            text-decoration: none;
+            letter-spacing: 1px;
+        }
+        .nav-links {
+            display: flex;
+            gap: 30px;
+        }
+        .nav-links a {
+            color: #333;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+        .nav-links a:hover {
+            color: #1a237e;
+        }
+        .auth-buttons {
+            display: flex;
+            gap: 15px;
+        }
+        .auth-button {
+            padding: 8px 20px;
+            border-radius: 20px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+        .login-button {
+            background-color: transparent;
+            border: 2px solid #1a237e;
+            color: #1a237e;
+        }
+        .login-button:hover {
+            background-color: #1a237e;
+            color: white;
+        }
+        .signup-button {
+            background-color: #1a237e;
+            color: white;
+        }
+        .signup-button:hover {
+            background-color: #0d47a1;
+            transform: translateY(-2px);
+        }
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        .logout-btn {
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        .logout-btn:hover {
+            background-color: #c82333;
+        }
+        .main-visual {
+            background: linear-gradient(to right, #0d47a1, #1976d2);
+            color: white;
+            text-align: center;
+            padding: 150px 20px 100px;
+            margin-top: 80px;
+        }
+        .main-visual h1 {
+            font-size: 2.5em;
+            margin-bottom: 20px;
+            line-height: 1.4;
+        }
+        .main-visual p {
+            font-size: 1.2em;
+            margin-bottom: 30px;
+            opacity: 0.9;
+        }
+        .main-btn {
+            display: inline-block;
+            padding: 12px 30px;
+            background: #ff6f00;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: background 0.3s;
+        }
+        .main-btn:hover {
+            background: #e65100;
+        }
+        .features {
+            padding: 50px 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-top: 30px;
+        }
+        .feature-item {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+        .feature-icon {
+            font-size: 2.5em;
+            color: #1a237e;
+            margin-bottom: 20px;
+        }
+        .feature-item h3 {
+            color: #333;
+            margin-bottom: 15px;
+        }
+        .feature-item p {
+            color: #666;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-top">
+            <a href="#features">서비스특징</a>
+            <a href="#about">Solseek소개</a>
+            <a href="#support">고객지원</a>
+        </div>
+        <div class="header-main">
+            <a href="{% url 'landing' %}" class="logo">KOLON BENIT</a>
+            {% if request.session.user %}
+            <div class="user-info">
+                <span>안녕하세요, {{ request.session.user }}님!</span>
+                <a href="{% url 'logout' %}" class="logout-btn">로그아웃</a>
+            </div>
+            {% else %}
+            <div class="auth-buttons">
+                <a href="{% url 'login' %}" class="auth-button login-button">로그인</a>
+                <a href="{% url 'signup' %}" class="auth-button signup-button">회원가입</a>
+            </div>
+            {% endif %}
+        </div>
+    </header>
+
+    <section class="main-visual">
+        <h1>AI와의 대화, Solseek와 함께 더 스마트하게</h1>
+        <p>최첨단 인공지능 Solseek AI와 대화하며 다양한 서비스를 경험하세요.</p>
+        {% if request.session.user %}
+        <a href="{% url 'service_choice' %}" class="main-btn">서비스 선택하기</a>
+        {% else %}
+        <a href="{% url 'login' %}" class="main-btn">지금 시작하기</a>
+        {% endif %}
+    </section>
+
+    <section class="features" id="features">
+        <div class="features-grid">
+            <div class="feature-item">
+                <div class="feature-icon"><i class="fas fa-brain"></i></div>
+                <h3>고급 자연어 처리</h3>
+                <p>최신 AI 기술을 활용한 자연스러운 대화</p>
+            </div>
+            <div class="feature-item">
+                <div class="feature-icon"><i class="fas fa-bolt"></i></div>
+                <h3>빠른 응답 속도</h3>
+                <p>최적화된 시스템으로 빠르게 답변</p>
+            </div>
+            <div class="feature-item">
+                <div class="feature-icon"><i class="fas fa-lock"></i></div>
+                <h3>안전한 데이터 보호</h3>
+                <p>엄격한 보안 정책으로 개인정보 보호</p>
+            </div>
+        </div>
+    </section>
+</body>
+</html> 
